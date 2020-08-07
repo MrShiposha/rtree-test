@@ -1,0 +1,18 @@
+[package]
+name = "rtree-test"
+version = "0.1.0"
+authors = ["Daniel Shiposha <mrshiposha@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "rtree_test"
+path = "src/lib.rs"
+
+[[bin]]
+name = "draw_rtree_test"
+path = "src/tool/main.rs"
+
+[dependencies]
+serde_json = "1.0"
+minifb = "0.17"
+serde = { version = "*", features = ["derive"] }
