@@ -3,10 +3,18 @@ use {
     rtree_test::{Rect, Coord}
 };
 
+mod digit;
+use digit::Digit;
+
 pub type Color = u32;
 const COLOR_CHANNEL_SIZE: usize = 8;
 
 const DEFAULT_COLOR: Color = 0x00FFFFFF;
+
+const DIGIT_RECT_SIZE: Coord = 2;
+const DIGIT_ROWS: Coord = 8;
+const DIGIT_COLS: Coord = 8;
+const DIGIT_WIDTH: Coord = DIGIT_COLS*DIGIT_RECT_SIZE;
 
 pub trait IntoRGB {
     fn into_rgb(self) -> Color;
@@ -25,15 +33,31 @@ impl IntoRGB for (u8, u8, u8) {
 pub struct Painter {
     frame_buffer: Vec<Color>,
     width: usize,
-    height: usize
+    height: usize,
+
+    digits: Vec<Digit>,
 }
 
 impl Painter {
     pub fn new(width: usize, height: usize) -> Self {
+        let digits = vec![
+            Digit::new(0x3c4242424242423c),
+            Digit::new(0x7820202020203830),
+            Digit::new(0x7c0c183060606438),
+            Digit::new(0x3c2220301830223c),
+            Digit::new(0x7020203e22242830),
+            Digit::new(0x1e304040301e027e),
+            Digit::new(0x3c46463e060c1830),
+            Digit::new(0x04040c183060627e),
+            Digit::new(0x3c4242423c42423c),
+            Digit::new(0x0c1830607c62623c),
+        ];
+
         Painter {
             frame_buffer: vec![DEFAULT_COLOR; width * height],
             width,
-            height
+            height,
+            digits
         }
     }
 
@@ -66,38 +90,36 @@ impl Painter {
         self.draw_vline(color, rect.top, rect.bottom, rect.right);
     }
 
-    pub fn draw_num(&mut self, color: Color, x: Coord, y: Coord, mut num: usize) {
-        let rect_size = 5;
-        let rect_gap = 3;
-        let rects_in_row = 5;
+    pub fn draw_num(&mut self, color: Color, x: Coord, y: Coord, num: usize) {
+        let mut digits = num_to_digits(num);
 
-        let rows = (num as f32 / rects_in_row as f32).ceil() as Coord;
-        let cols = if rows == 1 {
-            (num % (rects_in_row + 1)) as Coord
-        } else {
-            rects_in_row as Coord
-        };
+        let mut x = x - (DIGIT_WIDTH*digits.len() as Coord) / 2;
+        let y = y - DIGIT_WIDTH / 2;
 
-        let top = y - (rect_size*rows + rect_gap*(rows - 1)) / 2;
-        let left = x - (rect_size*cols + rect_gap*(cols - 1)) / 2;
+        while let Some(digit) = digits.pop() {
+            self.draw_digit(color, x, y, digit);
+            x += DIGIT_WIDTH;
+        }
+    }
 
-        for row in 0..rows {
-            for col in 0..cols {
-                let local_top = top + row*(rect_size + rect_gap);
-                let local_bottom = local_top + rect_size;
-                let local_left = left + col*(rect_size + rect_gap);
-                let local_right = local_left + rect_size;
+    fn draw_digit(&mut self, color: Color, x: Coord, y: Coord, digit: u8) {
+        assert!(digit < 10);
 
-                self.draw_filled_rect(color, &Rect {
-                    top: local_top,
-                    bottom: local_bottom,
-                    left: local_left,
-                    right: local_right
-                });
+        for row in 0..DIGIT_ROWS {
+            for col in 0..DIGIT_COLS {
+                let index = (row*DIGIT_COLS + col) as usize;
+                if self.digits[digit as usize].0.get(index) {
+                    let top = y + DIGIT_RECT_SIZE*row;
+                    let bottom = top + DIGIT_RECT_SIZE;
+                    let left = x + DIGIT_RECT_SIZE*col;
+                    let right = left + DIGIT_RECT_SIZE;
 
-                num -= 1;
-                if num == 0 {
-                    return;
+                    self.draw_filled_rect(color, &Rect {
+                        top,
+                        bottom,
+                        left,
+                        right
+                    });
                 }
             }
         }
@@ -116,4 +138,20 @@ impl Painter {
     fn coords_to_index(width: usize, x: Coord, y: Coord) -> usize {
         y as usize * width + x as usize
     }
+}
+
+fn num_to_digits(mut num: usize) -> Vec<u8> {
+    if num < 10 {
+        return vec![num as u8];
+    }
+
+    let mut digits = vec![];
+    let radix = 10;
+
+    while num != 0 {
+        digits.push((num % radix) as u8);
+        num /= radix;
+    }
+
+    digits
 }

@@ -302,7 +302,7 @@ impl App {
         let index_y = rect.top + (rect.bottom - rect.top) / 2;
 
         self.painter.draw_hollow_rect(color, rect);
-        self.painter.draw_num(color, index_x, index_y, index + 1);
+        self.painter.draw_num(color, index_x, index_y, index);
     }
 }
 
