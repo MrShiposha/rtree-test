@@ -1,12 +1,11 @@
 use {
     std::{
+        collections::HashSet,
         time::Duration,
-        fs::OpenOptions,
         path::{Path, PathBuf},
     },
-    serde::{Serialize, Deserialize},
     minifb::{Window, WindowOptions, Menu, Key, MENU_KEY_CTRL, MouseMode, MouseButton},
-    rtree_test::{Rect, Coord},
+    rtree_test::{TestCase, Rect, Coord},
     crate::painter::*,
 };
 
@@ -29,7 +28,7 @@ pub struct App {
     painter: Painter,
     data_rects: Vec<Rect>,
     search_rect: Option<Rect>,
-    founded: Vec<usize>,
+    founded: HashSet<usize>,
     begin_coords: Option<(Coord, Coord)>,
     is_edit: bool,
     edit_mode: EditMode
@@ -68,7 +67,7 @@ impl App {
         let founded;
 
         if case_file.as_ref().exists() {
-            let test_case = Self::load(&case_file);
+            let test_case = TestCase::load(&case_file);
 
             data_rects = test_case.data_rects;
             search_rect = Some(test_case.search_rect);
@@ -76,7 +75,7 @@ impl App {
         } else {
             data_rects = vec![];
             search_rect = None;
-            founded = vec![];
+            founded = HashSet::new();
         }
 
         let mut app = Self {
@@ -144,27 +143,11 @@ impl App {
             return;
         }
 
-        let file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(&self.case_file)
-            .unwrap();
-
-        serde_json::to_writer_pretty(
-            file,
-            &TestCase {
-                data_rects: self.data_rects.clone(),
-                search_rect: self.search_rect.clone().unwrap(),
-                founded: self.founded.clone()
-            }
-        ).unwrap();
-    }
-
-    fn load<P: AsRef<Path>>(path: P) -> TestCase {
-        let file = OpenOptions::new().read(true).open(path).unwrap();
-
-        serde_json::from_reader(file).unwrap()
+        TestCase {
+            data_rects: self.data_rects.clone(),
+            search_rect: self.search_rect.clone().unwrap(),
+            founded: self.founded.clone()
+        }.save(&self.case_file);
     }
 
     fn begin_edit(&mut self, x: Coord, y: Coord) {
@@ -196,7 +179,7 @@ impl App {
                 let index = self.data_rects.len() - 1;
                 self.draw_rect_by_index(Painter::clear_color(), index);
                 self.data_rects.swap_remove(index);
-                self.founded.retain(|&i| i != index);
+                self.founded.remove(&index);
             }
         }
 
@@ -217,7 +200,7 @@ impl App {
         self.founded.clear();
         for i in 0..self.data_rects.len() {
             if self.data_rects[i].intersects_with(&rect) {
-                self.founded.push(i);
+                self.founded.insert(i);
                 self.draw_rect_by_index(FOUND_COLOR, i);
             } else {
                 self.draw_rect_by_index(DATA_COLOR, i);
@@ -228,14 +211,11 @@ impl App {
     }
 
     fn redraw(&mut self) {
-        let mut founded_i = 0;
-
         for i in 0..self.data_rects.len() {
             let color;
 
-            if founded_i < self.founded.len() && self.founded[founded_i] == i {
+            if self.founded.contains(&i) {
                 color = FOUND_COLOR;
-                founded_i += 1;
             } else {
                 color = DATA_COLOR;
             }
@@ -265,7 +245,7 @@ impl App {
 
         let color = match self.search_rect {
             Some(ref search_rect) if rect.intersects_with(search_rect) => {
-                self.founded.push(index);
+                self.founded.insert(index);
 
                 FOUND_COLOR
             }
@@ -309,11 +289,4 @@ impl App {
 enum EditMode {
     Data,
     Search
-}
-
-#[derive(Serialize, Deserialize)]
-struct TestCase {
-    data_rects: Vec<Rect>,
-    search_rect: Rect,
-    founded: Vec<usize>,
 }
