@@ -35,7 +35,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new<P: AsRef<Path>>(case_file: P) -> App {
+    pub fn new<P: AsRef<Path>>(original_case_file: P, case_file: P) -> App {
         let mut window = Window::new(
             env!("CARGO_PKG_NAME"),
             WIDTH,
@@ -66,8 +66,8 @@ impl App {
         let search_rect;
         let founded;
 
-        if case_file.as_ref().exists() {
-            let test_case = TestCase::load(&case_file);
+        if original_case_file.as_ref().exists() {
+            let test_case = TestCase::load(&original_case_file);
 
             data_rects = test_case.data_rects;
             search_rect = Some(test_case.search_rect);
