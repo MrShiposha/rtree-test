@@ -10,7 +10,7 @@ use {
 mod rect;
 pub use rect::Rect;
 
-pub type Coord = i16;
+pub type Coord = i64;
 
 #[derive(Serialize, Deserialize)]
 pub struct TestCase {
