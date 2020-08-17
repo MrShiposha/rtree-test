@@ -9,7 +9,7 @@ mod digit;
 use digit::Digit;
 
 pub type ColorRGB = u32;
-pub struct ColorHSV(u8, u8, u8);
+pub struct ColorHSV(pub u8, pub u8, pub u8);
 const COLOR_CHANNEL_SIZE: usize = 8;
 
 const DEFAULT_COLOR: ColorRGB = 0x00FFFFFF;
