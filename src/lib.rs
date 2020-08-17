@@ -9,6 +9,7 @@ use {
 
 mod rect;
 pub use rect::Rect;
+pub mod painter;
 
 pub type Coord = i64;
 

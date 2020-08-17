@@ -1,6 +1,6 @@
 use {
     minifb::Window,
-    rtree_test::{Rect, Coord}
+    super::{Rect, Coord}
 };
 
 mod digit;

@@ -5,8 +5,7 @@ use {
         path::{Path, PathBuf},
     },
     minifb::{Window, WindowOptions, Menu, Key, MENU_KEY_CTRL, MouseMode, MouseButton},
-    rtree_test::{TestCase, Rect, Coord},
-    crate::painter::*,
+    rtree_test::{TestCase, Rect, Coord, painter::*},
 };
 
 const WIDTH: usize = 800;

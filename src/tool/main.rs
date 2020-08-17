@@ -1,4 +1,3 @@
-mod painter;
 mod app;
 
 use {
