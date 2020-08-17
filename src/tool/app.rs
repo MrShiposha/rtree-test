@@ -15,10 +15,10 @@ const FPS: u64 = 60;
 const SAVE_ID: usize = 0;
 const UNDO_ID: usize = 1;
 
-const DATA_COLOR: Color = 0;
-const FOUND_COLOR: Color = 0x0000ff00;
-const SEARCH_COLOR: Color = 0x00ff0000;
-const BEGIN_EDIT_COLOR: Color = 0x000000ff;
+const DATA_COLOR: ColorRGB = 0;
+const FOUND_COLOR: ColorRGB = 0x0000ff00;
+const SEARCH_COLOR: ColorRGB = 0x00ff0000;
+const BEGIN_EDIT_COLOR: ColorRGB = 0x000000ff;
 
 
 pub struct App {
@@ -227,8 +227,7 @@ impl App {
         }
     }
 
-    fn draw_edit_signal_rect(&mut self, color: Color, x: Coord, y: Coord) {
-
+    fn draw_edit_signal_rect(&mut self, color: ColorRGB, x: Coord, y: Coord) {
         let begin_size = 5;
         self.painter.draw_filled_rect(color, &Rect {
             top: y,
@@ -275,7 +274,7 @@ impl App {
         }
     }
 
-    fn draw_rect_by_index(&mut self, color: Color, index: usize) {
+    fn draw_rect_by_index(&mut self, color: ColorRGB, index: usize) {
         let rect = &self.data_rects[index];
         let index_x = rect.left + (rect.right - rect.left) / 2;
         let index_y = rect.top + (rect.bottom - rect.top) / 2;

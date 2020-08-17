@@ -6,10 +6,11 @@ use {
 mod digit;
 use digit::Digit;
 
-pub type Color = u32;
+pub type ColorRGB = u32;
+pub struct ColorHSV(u8, u8, u8);
 const COLOR_CHANNEL_SIZE: usize = 8;
 
-const DEFAULT_COLOR: Color = 0x00FFFFFF;
+const DEFAULT_COLOR: ColorRGB = 0x00FFFFFF;
 
 const DIGIT_RECT_SIZE: Coord = 2;
 const DIGIT_ROWS: Coord = 8;
@@ -17,21 +18,62 @@ const DIGIT_COLS: Coord = 8;
 const DIGIT_WIDTH: Coord = DIGIT_COLS*DIGIT_RECT_SIZE;
 
 pub trait IntoRGB {
-    fn into_rgb(self) -> Color;
+    fn into_rgb(self) -> ColorRGB;
 }
 
 impl IntoRGB for (u8, u8, u8) {
-    fn into_rgb(self) -> Color {
-        let r = (self.0 as Color) << (COLOR_CHANNEL_SIZE << 1);
-        let g = (self.1 as Color) << COLOR_CHANNEL_SIZE;
-        let b = self.2 as Color;
+    fn into_rgb(self) -> ColorRGB {
+        let r = (self.0 as ColorRGB) << (COLOR_CHANNEL_SIZE << 1);
+        let g = (self.1 as ColorRGB) << COLOR_CHANNEL_SIZE;
+        let b = self.2 as ColorRGB;
 
         r | g | b
     }
 }
 
+impl IntoRGB for ColorHSV {
+    fn into_rgb(self) -> ColorRGB {
+        let ColorHSV(h, s, v) = self;
+        let h_i = (h / 60) % 6;
+        let v_min = ((100 - s) * v) / 100;
+        let a = (v - v_min) * (h % 60) / 60;
+
+        let v_inc = v_min + a;
+        let v_dec = v - a;
+
+        let v = 255*v/100;
+        let v_min = 255*v_min/100;
+        let v_dec = 255*v_dec/100;
+        let v_inc = 255*v_inc/100;
+
+        match h_i {
+            0 => (v, v_inc, v_min).into_rgb(),
+            1 => (v_dec, v, v_min).into_rgb(),
+            2 => (v_min, v, v_inc).into_rgb(),
+            3 => (v_min, v_dec, v).into_rgb(),
+            4 => (v_inc, v_min, v).into_rgb(),
+            5 => (v, v_min, v_dec).into_rgb(),
+            _ => unreachable!()
+        }
+    }
+}
+
+pub trait UnpackRGB {
+    fn unpack_rgb(&self) -> (u8, u8, u8);
+}
+
+impl UnpackRGB for ColorRGB {
+    fn unpack_rgb(&self) -> (u8, u8, u8) {
+        let r = ((self >> (COLOR_CHANNEL_SIZE << 1)) & 0xFF) as u8;
+        let g = ((self >> COLOR_CHANNEL_SIZE) & 0xFF) as u8;
+        let b = (self & 0xFF) as u8;
+
+        (r, g, b)
+    }
+}
+
 pub struct Painter {
-    frame_buffer: Vec<Color>,
+    frame_buffer: Vec<ColorRGB>,
     width: usize,
     height: usize,
 
@@ -65,15 +107,15 @@ impl Painter {
         window.update_with_buffer(&self.frame_buffer, self.width, self.height).unwrap();
     }
 
-    pub fn draw_hline(&mut self, color: Color, x0: Coord, x1: Coord, y: Coord) {
+    pub fn draw_hline(&mut self, color: ColorRGB, x0: Coord, x1: Coord, y: Coord) {
         self.draw_pixels(color, (x0..=x1).map(|x| (x, y)))
     }
 
-    pub fn draw_vline(&mut self, color: Color, y0: Coord, y1: Coord, x: Coord) {
+    pub fn draw_vline(&mut self, color: ColorRGB, y0: Coord, y1: Coord, x: Coord) {
         self.draw_pixels(color, (y0..=y1).map(|y| (x, y)))
     }
 
-    pub fn draw_pixels<I>(&mut self, color: Color, coords: I)
+    pub fn draw_pixels<I>(&mut self, color: ColorRGB, coords: I)
     where
         I: Iterator<Item=(Coord, Coord)>
     {
@@ -83,14 +125,14 @@ impl Painter {
         }
     }
 
-    pub fn draw_hollow_rect(&mut self, color: Color, rect: &Rect) {
+    pub fn draw_hollow_rect(&mut self, color: ColorRGB, rect: &Rect) {
         self.draw_hline(color, rect.left, rect.right, rect.top);
         self.draw_hline(color, rect.left, rect.right, rect.bottom);
         self.draw_vline(color, rect.top, rect.bottom, rect.left);
         self.draw_vline(color, rect.top, rect.bottom, rect.right);
     }
 
-    pub fn draw_num(&mut self, color: Color, x: Coord, y: Coord, num: usize) {
+    pub fn draw_num(&mut self, color: ColorRGB, x: Coord, y: Coord, num: usize) {
         let mut digits = num_to_digits(num);
 
         let mut x = x - (DIGIT_WIDTH*digits.len() as Coord) / 2;
@@ -102,7 +144,7 @@ impl Painter {
         }
     }
 
-    fn draw_digit(&mut self, color: Color, x: Coord, y: Coord, digit: u8) {
+    fn draw_digit(&mut self, color: ColorRGB, x: Coord, y: Coord, digit: u8) {
         assert!(digit < 10);
 
         for row in 0..DIGIT_ROWS {
@@ -125,13 +167,13 @@ impl Painter {
         }
     }
 
-    pub fn draw_filled_rect(&mut self, color: Color, rect: &Rect) {
+    pub fn draw_filled_rect(&mut self, color: ColorRGB, rect: &Rect) {
         for y in rect.top..rect.bottom {
             self.draw_hline(color, rect.left, rect.right, y);
         }
     }
 
-    pub fn clear_color() -> Color {
+    pub fn clear_color() -> ColorRGB {
         0x00ffffff
     }
 
