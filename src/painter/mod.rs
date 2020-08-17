@@ -38,18 +38,22 @@ impl IntoRGB for (u8, u8, u8) {
 
 impl IntoRGB for ColorHSV {
     fn into_rgb(self) -> ColorRGB {
+        fn percent_to_value(percent: u8) -> u8 {
+            (255.0 * percent as f32 / 100.0) as u8
+        }
+
         let ColorHSV(h, s, v) = self;
         let h_i = (h / 60) % 6;
-        let v_min = ((100 - s) * v) / 100;
-        let a = (v - v_min) * (h % 60) / 60;
+        let v_min = (((100 - s as u16) * v as u16) / 100) as u8;
+        let a = ((v - v_min) as u16 * (h % 60) as u16 / 60) as u8;
 
         let v_inc = v_min + a;
         let v_dec = v - a;
 
-        let v = 255*v/100;
-        let v_min = 255*v_min/100;
-        let v_dec = 255*v_dec/100;
-        let v_inc = 255*v_inc/100;
+        let v = percent_to_value(v);
+        let v_min = percent_to_value(v_min);
+        let v_dec = percent_to_value(v_dec);
+        let v_inc = percent_to_value(v_inc);
 
         match h_i {
             0 => (v, v_inc, v_min).into_rgb(),
