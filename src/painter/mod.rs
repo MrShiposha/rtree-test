@@ -2,7 +2,7 @@ use {
     std::path::Path,
     minifb::Window,
     image,
-    super::{Rect, Coord}
+    super::{Rect, Coord, TestCase}
 };
 
 mod digit;
@@ -13,6 +13,9 @@ pub struct ColorHSV(u8, u8, u8);
 const COLOR_CHANNEL_SIZE: usize = 8;
 
 const DEFAULT_COLOR: ColorRGB = 0x00FFFFFF;
+pub const DATA_COLOR: ColorRGB = 0;
+pub const FOUND_COLOR: ColorRGB = 0x0000ff00;
+pub const SEARCH_COLOR: ColorRGB = 0x00ff0000;
 
 const DIGIT_RECT_SIZE: Coord = 2;
 const DIGIT_ROWS: Coord = 8;
@@ -121,6 +124,30 @@ impl Painter {
             self.height as u32,
             image::ColorType::Rgb8
         ).unwrap();
+    }
+
+    pub fn draw_test_case(&mut self, case: &TestCase) {
+        for (i, rect) in case.data_rects.iter().enumerate() {
+            let color;
+
+            if case.founded.contains(&i) {
+                color = FOUND_COLOR;
+            } else {
+                color = DATA_COLOR;
+            }
+
+            self.draw_indexed_rect(rect, color, i);
+        }
+
+        self.draw_hollow_rect(SEARCH_COLOR, &case.search_rect);
+    }
+
+    pub fn draw_indexed_rect(&mut self, rect: &Rect, color: ColorRGB, index: usize) {
+        let index_x = rect.left + (rect.right - rect.left) / 2;
+        let index_y = rect.top + (rect.bottom - rect.top) / 2;
+
+        self.draw_hollow_rect(color, rect);
+        self.draw_num(color, index_x, index_y, index);
     }
 
     pub fn draw_hline(&mut self, color: ColorRGB, x0: Coord, x1: Coord, y: Coord) {

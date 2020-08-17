@@ -15,9 +15,6 @@ const FPS: u64 = 60;
 const SAVE_ID: usize = 0;
 const UNDO_ID: usize = 1;
 
-const DATA_COLOR: ColorRGB = 0;
-const FOUND_COLOR: ColorRGB = 0x0000ff00;
-const SEARCH_COLOR: ColorRGB = 0x00ff0000;
 const BEGIN_EDIT_COLOR: ColorRGB = 0x000000ff;
 
 
@@ -176,7 +173,7 @@ impl App {
             Some((x, y)) => self.clear_begin_edit(x, y),
             None => if !self.data_rects.is_empty() {
                 let index = self.data_rects.len() - 1;
-                self.draw_rect_by_index(Painter::clear_color(), index);
+                self.painter.draw_indexed_rect(&self.data_rects[index], Painter::clear_color(), index);
                 self.data_rects.swap_remove(index);
                 self.founded.remove(&index);
             }
@@ -197,12 +194,12 @@ impl App {
         self.painter.draw_hollow_rect(SEARCH_COLOR, &rect);
 
         self.founded.clear();
-        for i in 0..self.data_rects.len() {
+        for (i, rect) in self.data_rects.iter().enumerate() {
             if self.data_rects[i].intersects_with(&rect) {
                 self.founded.insert(i);
-                self.draw_rect_by_index(FOUND_COLOR, i);
+                self.painter.draw_indexed_rect(rect, FOUND_COLOR, i);
             } else {
-                self.draw_rect_by_index(DATA_COLOR, i);
+                self.painter.draw_indexed_rect(rect, DATA_COLOR, i);
             }
         }
 
@@ -210,7 +207,7 @@ impl App {
     }
 
     fn redraw(&mut self) {
-        for i in 0..self.data_rects.len() {
+        for (i, rect) in self.data_rects.iter().enumerate() {
             let color;
 
             if self.founded.contains(&i) {
@@ -219,7 +216,7 @@ impl App {
                 color = DATA_COLOR;
             }
 
-            self.draw_rect_by_index(color, i);
+            self.painter.draw_indexed_rect(rect, color, i);
         }
 
         if let Some(ref search_rect) = self.search_rect {
@@ -251,7 +248,7 @@ impl App {
         };
 
         self.data_rects.push(rect);
-        self.draw_rect_by_index(color, index);
+        self.painter.draw_indexed_rect(&self.data_rects[index], color, index);
     }
 
     fn make_rect(xs: (Coord, Coord), ys: (Coord, Coord)) -> Rect {
@@ -272,15 +269,6 @@ impl App {
             left,
             right
         }
-    }
-
-    fn draw_rect_by_index(&mut self, color: ColorRGB, index: usize) {
-        let rect = &self.data_rects[index];
-        let index_x = rect.left + (rect.right - rect.left) / 2;
-        let index_y = rect.top + (rect.bottom - rect.top) / 2;
-
-        self.painter.draw_hollow_rect(color, rect);
-        self.painter.draw_num(color, index_x, index_y, index);
     }
 }
 
