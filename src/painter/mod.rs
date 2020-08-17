@@ -1,5 +1,7 @@
 use {
+    std::path::Path,
     minifb::Window,
+    image,
     super::{Rect, Coord}
 };
 
@@ -105,6 +107,20 @@ impl Painter {
 
     pub fn render(&self, window: &mut Window) {
         window.update_with_buffer(&self.frame_buffer, self.width, self.height).unwrap();
+    }
+
+    pub fn save_image<P: AsRef<Path>>(&self, path: P) {
+        image::save_buffer(
+            path,
+            self.frame_buffer.iter().map(|rgb_color| {
+                let (r, g, b) = rgb_color.unpack_rgb();
+
+                vec![r, g, b]
+            }).flatten().collect::<Vec<_>>().as_slice(),
+            self.width as u32,
+            self.height as u32,
+            image::ColorType::Rgb8
+        ).unwrap();
     }
 
     pub fn draw_hline(&mut self, color: ColorRGB, x0: Coord, x1: Coord, y: Coord) {

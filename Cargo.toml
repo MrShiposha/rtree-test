@@ -15,6 +15,7 @@ path = "src/tool/main.rs"
 [dependencies]
 serde_json = "1.0"
 minifb = "0.17"
+image = "0.23.8"
 bitmaps = "2.1.0"
 typenum = "*"
 serde = { version = "*", features = ["derive"] }
