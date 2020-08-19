@@ -15,7 +15,7 @@ const COLOR_CHANNEL_SIZE: usize = 8;
 const DEFAULT_COLOR: ColorRGB = 0x00FFFFFF;
 pub const DATA_COLOR: ColorRGB = 0;
 pub const FOUND_COLOR: ColorRGB = 0x0000ff00;
-pub const SEARCH_COLOR: ColorRGB = 0x00ff0000;
+pub const SEARCH_COLOR: ColorRGB = 0x000000ff;
 
 const DIGIT_RECT_SIZE: Coord = 2;
 const DIGIT_ROWS: Coord = 8;
