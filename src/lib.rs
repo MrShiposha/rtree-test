@@ -13,7 +13,7 @@ pub mod painter;
 
 pub type Coord = i64;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TestCase {
     pub data_rects: Vec<Rect>,
     pub search_rect: Rect,
